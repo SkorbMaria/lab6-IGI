@@ -1,0 +1,106 @@
+﻿@{
+    ViewData["Title"] = "book";
+}
+
+<h2>book</h2>
+
+
+<table class="table">
+    <tr>
+        <td>Name</td>
+        <td>Cypher</td>
+        <td>Date</td>
+        <td>Price</td>
+        <td>Count</td>
+        <td>Fee</td>
+    </tr>
+    <tbody id="vals"></tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="addForm">
+            <div>Name</div>
+            <input name="Name" class="form-control" />
+            <div>Cypher</div>
+            <input name="Cypher" class="form-control" />
+            <div>Date</div>
+            <input name="Date" class="form-control" />
+            <div>Price</div>
+            <input name="Price" class="form-control" />
+            <div>Count</div>
+            <input name="Count" class="form-control" />
+            <div>Fee</div>
+            <input name="Fee" class="form-control" />
+        </form>
+        <input type="submit" value="Create" class="sendForm btn btn-default" />
+    </div>
+</div>
+
+
+@section Scripts
+    {
+    <script>
+        $(document).ready(_ => {
+            $.ajax({
+                url: '@Url.Action("book", "api")',
+                type: "GET",
+                success: res => loadTable(res)
+            })
+        });
+       $(document).on("click", ".del", e => {
+
+            $.ajax({
+                url: '@Url.Action("book", "api")?id=' + e.target.id,
+                type: "DELETE",
+                success: res => loadTable(res)
+            });
+        });
+
+        $(document).on("click", ".sendForm", e => {
+            var book = $("#addForm").serializeArray().reduce((prev, cur) => {
+                if (prev != undefined)
+                    prev[cur.name] = cur.value;
+                else prev = { [cur.name]: cur.value };
+
+                return prev;
+
+            }, undefined);
+            for (let val in book) {
+                if (book[val] == "" || book[val] == null) {
+                    alert("Error");
+                    return;
+                }
+            }
+            $.ajax({
+                url: '@Url.Action("addBook","api")',
+                type: "POST",
+                data: {
+                    book: book
+                },
+                success: res => {
+                    loadTable(res)
+                }
+            })
+
+        });
+
+        function loadTable(res) {
+
+            $("tbody#vals").html("");
+            for (let i = 0; i < res.length; i++) {
+                $("tbody#vals").append(`
+                            <tr>
+                                <td>${res[i].name}</td>
+                                <td>${res[i].cypher}</td>
+                                <td>${res[i].date}</td>
+                                <td>${res[i].price}</td>
+                                <td>${res[i].sell}</td>
+                                <td>${res[i].fee}</td>
+                                <td class="del" id="${res[i].id}">x</td>
+                            </tr>
+                            `);
+            }
+        }
+    </script>
+}

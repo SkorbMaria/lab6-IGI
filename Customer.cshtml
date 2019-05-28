@@ -1,0 +1,90 @@
+﻿@{
+    ViewData["Title"] = "customer";
+}
+
+<h2>customer</h2>
+
+
+<table class="table">
+    <tr>
+        <td>Name</td>
+        <td>About</td>
+    </tr>
+    <tbody id="vals"></tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="addForm">
+            <div>Name</div>
+            <input name="Name" class="form-control" />
+            <div>About</div>
+            <input name="About" class="form-control" />
+        </form>
+        <input type="submit" value="Create" class="sendForm btn btn-default" />
+    </div>
+</div>
+
+
+@section Scripts
+    {
+    <script>
+        $(document).ready(_ => {
+            $.ajax({
+                url: '@Url.Action("customer", "api")',
+                type: "GET",
+                success: res => loadTable(res)
+            })
+        });
+       $(document).on("click", ".del", e => {
+
+            $.ajax({
+                url: '@Url.Action("customer", "api")?id=' + e.target.id,
+                type: "DELETE",
+                success: res => loadTable(res)
+            });
+        });
+
+        $(document).on("click", ".sendForm", e => {
+            var customer = $("#addForm").serializeArray().reduce((prev, cur) => {
+                if (prev != undefined)
+                    prev[cur.name] = cur.value;
+                else prev = { [cur.name]: cur.value };
+
+                return prev;
+
+            }, undefined);
+            for (let val in customer) {
+                if (customer[val] == "" || customer[val] == null) {
+                    alert("Error");
+                    return;
+                }
+            }
+            $.ajax({
+                url: '@Url.Action("addCustomer","api")',
+                type: "POST",
+                data: {
+                    customer: customer
+                },
+                success: res => {
+                    loadTable(res)
+                }
+            })
+
+        });
+
+        function loadTable(res) {
+
+            $("tbody#vals").html("");
+            for (let i = 0; i < res.length; i++) {
+                $("tbody#vals").append(`
+                            <tr>
+                                <td>${res[i].name}</td>
+                                <td>${res[i].about}</td>
+                                <td class="del" id="${res[i].id}">x</td>
+                            </tr>
+                            `);
+            }
+        }
+    </script>
+}

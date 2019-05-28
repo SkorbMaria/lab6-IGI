@@ -1,0 +1,111 @@
+﻿@{
+    ViewData["Title"] = "Contract";
+}
+
+<h2>Contract</h2>
+
+
+<table class="table">
+    <tr>
+        <td>DateStart</td>
+        <td>Term</td>
+        <td>DateEnd</td>
+        <td>Customer name</td>
+        <td>Book name</td>
+        <td>Autor name</td>
+    </tr>
+    <tbody id="vals"></tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="addForm">
+            <div>DateStart</div>
+            <input name="DateStart" class="form-control" />
+            <div>Term</div>
+            <input name="Term" class="form-control" />
+            <div>DateEnd</div>
+            <input name="DateEnd" class="form-control" />
+            <div>BookName</div>
+            @Html.DropDownList("bookName", new SelectList(new[] { "Book1", "Book2", "Book3" }), null, new { @class = "form-control bookName" })
+            <div>AutorName</div>
+            @Html.DropDownList("autorName", new SelectList(new[] { "Autor 1", "Autor 2", "Autor 3" }), null, new { @class = "form-control autorName" })
+        </form>
+        <input type="submit" value="Create" class="sendForm btn btn-default" />
+    </div>
+</div>
+
+
+@section Scripts
+    {
+    <script>
+        $(document).ready(_ => {
+
+            $.ajax({
+                url: '@Url.Action("contract", "api")',
+                type: "GET",
+                success: res => loadTable(res)
+            })
+        });
+
+       $(document).on("click", ".del", e => {
+
+            $.ajax({
+                url: '@Url.Action("contract", "api")?id=' + e.target.id,
+                type: "DELETE",
+                success: res => loadTable(res)
+            });
+        });
+
+        $(document).on("click", ".sendForm", e => {
+
+            var contract = $("#addForm").serializeArray().reduce((prev, cur) => {
+                if (prev != undefined)
+                    prev[cur.name] = cur.value;
+                else prev = { [cur.name]: cur.value };
+
+                return prev;
+
+            }, undefined);
+
+
+            for (let val in contract) {
+                if (contract[val] == "" || contract[val] == null) {
+                    alert("Error");
+                    return;
+                }
+            }
+
+            $.ajax({
+                url: '@Url.Action("addContract","api")',
+                type: "POST",
+                data: {
+                    contract: contract,
+                    bookName: contract.bookName,
+                    autorName: contract.autorName
+                },
+                success: res => {
+                    loadTable(res)
+                }
+            })
+
+        });
+
+        function loadTable(res) {
+
+            $("tbody#vals").html("");
+            for (let i = 0; i < res.length; i++) {
+                $("tbody#vals").append(`
+                            <tr>
+                                <td>${res[i].dateStart}</td>
+                                <td>${res[i].term}</td>
+                                <td>${res[i].dateEnd}</td>
+                                <td>${res[i].book.name}</td>
+                                <td>${res[i].autor.name}</td>
+                                <td class="del" id="${res[i].id}">x</td>
+                            </tr>
+                            `);
+            }
+        }
+    </script>
+}

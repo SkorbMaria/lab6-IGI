@@ -1,0 +1,110 @@
+﻿@{
+    ViewData["Title"] = "Order";
+}
+
+<h2>Order</h2>
+
+
+<table class="table">
+    <tr>
+        <td>RecieveDate</td>
+        <td>CompleteDate</td>
+        <td>Count</td>
+        <td>Customer name</td>
+        <td>Book name</td>
+    </tr>
+    <tbody id="vals"></tbody>
+</table>
+
+<div class="row">
+    <div class="col-md-4">
+        <form id="addForm">
+            <div>RecieveDate</div>
+            <input name="RecieveDate" class="form-control" />
+            <div>CompleteDate</div>
+            <input name="CompleteDate" class="form-control" />
+            <div>Count</div>
+            <input name="Count" class="form-control" />
+            <div>CustomerName</div>
+            @Html.DropDownList("customerName", new SelectList(new[] { "Customer1", "Customer2", "Customer3" }), null, new { @class = "form-control customerName" })
+            <div>BookName</div>
+            @Html.DropDownList("bookName", new SelectList(new[] { "Book1", "Book2", "Book3" }), null, new { @class = "form-control bookName" })
+        </form>
+        <input type="submit" value="Create" class="sendForm btn btn-default" />
+    </div>
+</div>
+
+
+@section Scripts
+    {
+    <script>
+        $(document).ready(_ => {
+
+            $.ajax({
+                url: '@Url.Action("order", "api")',
+                type: "GET",
+                success: res => loadTable(res)
+            })
+        });
+
+       $(document).on("click", ".del", e => {
+
+            $.ajax({
+                url: '@Url.Action("order", "api")?id=' + e.target.id,
+                type: "DELETE",
+                success: res => loadTable(res)
+            });
+        });
+
+        $(document).on("click", ".sendForm", e => {
+
+            var order = $("#addForm").serializeArray().reduce((prev, cur) => {
+                if (prev != undefined)
+                    prev[cur.name] = cur.value;
+                else prev = { [cur.name]: cur.value };
+
+                return prev;
+
+            }, undefined);
+
+
+            for (let val in order) {
+                if (order[val] == "" || order[val] == null) {
+                    alert("Error");
+                    return;
+                }
+            }
+
+            $.ajax({
+                url: '@Url.Action("addOrder","api")',
+                type: "POST",
+                data: {
+                    order: order,
+                    customerName: order.customerName,
+                    bookName: order.bookName,
+                },
+                success: res => {
+                    loadTable(res)
+                }
+            })
+
+        });
+
+        function loadTable(res) {
+
+            $("tbody#vals").html("");
+            for (let i = 0; i < res.length; i++) {
+                $("tbody#vals").append(`
+                            <tr>
+                                <td>${res[i].recieveDate}</td>
+                                <td>${res[i].completeDate}</td>
+                                <td>${res[i].count}</td>
+                                <td>${res[i].customer.name}</td>
+                                <td>${res[i].book.name}</td>
+                                <td class="del" id="${res[i].id}">x</td>
+                            </tr>
+                            `);
+            }
+        }
+    </script>
+}
